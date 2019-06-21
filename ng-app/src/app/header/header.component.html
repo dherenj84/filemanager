@@ -1,0 +1,30 @@
+<nav class="navbar navbar-dark bg-dark m-2">
+  <span class="navbar-brand mb-0 h1"><a href="#browser"><i class="fas fa-home" style="color:white;"></i></a> File
+    Manager</span>
+  <span *ngIf="user" class="float-right" style="color: whitesmoke">
+    Welcome {{user.fname + ' ' + user.lname}} (Try <a href="#editor"
+      style="color:white;text-decoration: underline;">CKEditor</a><button type="button" class="btn btn-link"
+      data-toggle="modal" data-target="#exampleModal"><i class="fas fa-info-circle" style="color:white;"></i></button>)
+    <button class="btn btn-primary btn-sm ml-1" (click)="logout()">Logout</button>
+  </span>
+</nav>
+
+<div id="exampleModal" class="modal" tabindex="-1" role="dialog">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">About CKEditor</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p>Try this Angular File Manager's Integration with a popular Open Source WYSIWYG Editor
+          <strong>CKEditor</strong>. For
+          more details refer
+          the official page at <a href="https://ckeditor.com/ckeditor-4/"
+            target="_blank">https://ckeditor.com/ckeditor-4/</a></p>
+      </div>
+    </div>
+  </div>
+</div>

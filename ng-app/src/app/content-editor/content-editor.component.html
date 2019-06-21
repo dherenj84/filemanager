@@ -1,0 +1,13 @@
+<app-header></app-header>
+<div class="container-fluid mt-2">
+    <div class="row">
+        <div class="col-6">
+            <ckeditor [(ngModel)]="model.editorData" [config]="model.config" (change)="onEditorChange($event)">
+            </ckeditor>
+        </div>
+        <div class="col-6 border">
+            <div class="mb-1"><strong>Preview</strong></div>
+            <div class="editorPreview border p-1"></div>
+        </div>
+    </div>
+</div>

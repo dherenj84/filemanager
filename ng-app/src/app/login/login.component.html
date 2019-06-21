@@ -1,0 +1,28 @@
+<app-header></app-header>
+<form>
+  <div class="card w-25 shadow" style="position: absolute;top: 30%;left:40%">
+    <div class="text-center text-secondary font-weight-bold">Please login to continue</div>
+    <div class="card-body">
+      <div class="input-group input-group-sm mb-3">
+        <label class="pr-2" for="username">Username</label>
+        <input id="username" name="username" type="text" class="form-control" aria-label="Username"
+          aria-describedby="basic-addon2" [(ngModel)]="user.username" (input)="loginError=false;">
+        <div class="input-group-append">
+          <span class="input-group-text" id="basic-addon2">@demo.com</span>
+        </div>
+      </div>
+      <div class="input-group input-group-sm">
+        <label class="pr-2" for="password">Password</label>
+        <input id="password" name="password" type="password" class="form-control" aria-label="Password"
+          [(ngModel)]="user.password" (input)="loginError=false;">
+      </div>
+      <div *ngIf="loginError" class="input-group text-danger mt-1">
+        <small>{{loginMessage}}</small>
+      </div>
+    </div>
+    <div class="text-center">
+      <button type="submit" class="btn btn-lg btn-primary mb-2" (click)="login($event)">Login
+        <i *ngIf="loading" class="fas fa-spinner fa-spin"></i></button>
+    </div>
+  </div>
+</form>
