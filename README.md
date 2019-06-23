@@ -26,6 +26,9 @@ There are 3 simple configuration changes that would be required to configure the
 
 <b>Please note</b> that I am using my own Azure account's Access Key to access the File Storage Account. The Access Key that you will find under application.properties is just a placeholder for you to refer the syntax but may not be valid anymore.
 
+## Sources
+The Angular App resides in the <b>ng-app</b> folder under project root and the Java App resides in the conventional <b>src</b> folder under project root.
+
 ## Build & Run the app
 The App runs as one single java web application and can be deployed as a war in a container of your choice. The complied Angular UI code resides in <b>src/main/resources/static</b> folder. Because the backend being Spring Boot, the app can be quickly run using the following command on the project root,<br>
 <b>mvn spring-boot:run</b><br>
