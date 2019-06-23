@@ -1,5 +1,5 @@
 # File Manager
-A File Manager/Browser with the ability to list/upload/delete files and directories from a root directory that you can specify either from a Native File System or one of the Cloud Storage Providers(currently configured for Microsoft Azure Storage Account using a File Share). Additionally, the app also demonstrates the integration between CKEditor which is a popular WYSIWYG editor with this file system for browsing files using the File Manager and uploading files and images.
+A File Manager/Browser with the ability to list/upload/delete files and directories from a root directory that you can specify either from a <b>Native File System</b> or one of the <b>Cloud Storage</b> Providers(currently configured for Microsoft Azure Storage Account using a File Share). Additionally, the app also demonstrates the integration between <b>CKEditor</b> which is a popular <b>WYSIWYG</b> editor with this file system for browsing files using the File Manager and uploading files and images.
 
 <img src="https://dherenj84.azurewebsites.net/filemanager/getFile/me.png?filePath=assets%2Fimages%2Fme.png"> 
 
