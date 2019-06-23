@@ -3,7 +3,7 @@ A File Manager/Browser with the ability to list/upload/delete files and director
 
 <img src="https://dherenj84.azurewebsites.net/filemanager/getFile/me.png?filePath=assets%2Fimages%2Fme.png"> 
 
-# Demo
+## Demo
 <a href="https://dherenj84.azurewebsites.net/filemanager" target="_blank">https://dherenj84.azurewebsites.net/filemanager</a>
 <br>
 Username: sample
