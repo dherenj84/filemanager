@@ -19,7 +19,7 @@ Password: sample
 6. Maven for buliding, packaging and running the app (https://maven.apache.org/)
 
 ## Configuration
-There are 3 simple changes that would be required to configure the app based on what storage mode you want the app to use,
+There are 3 simple configuration changes that would be required to configure the app based on what storage mode you want to use,
 1. Under src/main/resources/application.properties change the storage.mode to either native for Native File System or cloud for Cloud Storage Accounts(currently Microsoft Azure Storage Supported) .
 2. If storage.mode is set as native in step 1 above, specifiy file.directory and file.root properties otherwise skip this step.
 3. If storage.mode is set as cloud in step 1, specify azure.storage.connection-string property in the application.properties. This value can be generated using the Access keys feature under your Storage Account in Microsoft Azure Portal.
