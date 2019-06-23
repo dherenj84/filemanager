@@ -25,9 +25,13 @@ export class ContentEditorComponent implements OnInit {
   }
 
   private onFileBrowserFileClick(event) {
-    if (event.origin == "http://localhost:8080" || event.origin == "http://localhost:4200")
-      window['CKEDITOR'].tools.callFunction(event.data.ckEditorFuncNum, event.data.fileUrl);
-    else return;
+    //put you origin checks as required from cross-origin File Manager frame posting message to CKEditor frame
+
+    // if (event.origin == "http://localhost:8080" || event.origin == "http://localhost:4200")
+    //   window['CKEDITOR'].tools.callFunction(event.data.ckEditorFuncNum, event.data.fileUrl);
+    // else return;
+
+    window['CKEDITOR'].tools.callFunction(event.data.ckEditorFuncNum, event.data.fileUrl);
   }
 
   onEditorChange(event: any) {
