@@ -17,6 +17,7 @@ import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -40,6 +41,9 @@ public class FileController {
 
 	@Autowired
 	FileServiceFactory serviceFactory;
+
+	@Value("${file.root}")
+	private String FILE_ROOT;
 
 	@GetMapping("/listDirectories")
 	public List<FileView> listDirectories(@RequestParam Optional<String> dir) {
@@ -111,6 +115,11 @@ public class FileController {
 	public ApplicationView getApplication(@PathVariable Long id) {
 		// todo code to fetch any application sub-directory should go here
 		return null;
+	}
+
+	@GetMapping("/getFileRoot")
+	public String getFileRoot() {
+		return FILE_ROOT;
 	}
 
 }

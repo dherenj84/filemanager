@@ -6,15 +6,13 @@ import { environment } from '../../environments/environment';
 
 declare var $: any;
 
-const docbase: string = 'assets';
-
 @Component({
   selector: 'app-file-browser',
   templateUrl: './file-browser.component.html',
   styleUrls: ['./file-browser.component.css']
 })
 export class FileBrowserComponent implements OnInit {
-
+  docbase: string;
   contentRoot: string;
   dirs: any[] = [];
   files: any[] = []
@@ -39,7 +37,7 @@ export class FileBrowserComponent implements OnInit {
     this.loggedInUser = null;
     if (!isNullOrUndefined(this.ckEditorFuncNum)) {
       this.loading = false;
-      this.listFilesAndDirectories();
+      this.setContentRoot()
     }
     else if (isNullOrUndefined(sessionStorage.getItem('loggedInUser'))) {
       this.router.navigate(['login'], {
@@ -52,22 +50,31 @@ export class FileBrowserComponent implements OnInit {
     else {
       this.loggedInUser = JSON.parse(sessionStorage.getItem('loggedInUser'));
       this.loading = true;
-      this.listFilesAndDirectories();
+      this.setContentRoot();
     }
+  }
+
+  setContentRoot() {
+    this.http.get(environment.serviceUrl + 'getFileRoot', {
+      responseType: 'text'
+    }).subscribe(resp => {
+      this.docbase = resp;
+      this.listFilesAndDirectories();
+    })
   }
 
   listFilesAndDirectories() {
     if (!this.contentRoot)
-      this.contentRoot = docbase;
-    let dirUrl = environment.serviceUrl + "listDirectories?dir=" + (this.contentRoot != docbase ? this.contentRoot : '');
-    let fileUrl = environment.serviceUrl + "listFiles?dir=" + (this.contentRoot != docbase ? this.contentRoot : '');
+      this.contentRoot = this.docbase;
+    let dirUrl = environment.serviceUrl + "listDirectories?dir=" + (this.contentRoot != this.docbase ? this.contentRoot : '');
+    let fileUrl = environment.serviceUrl + "listFiles?dir=" + (this.contentRoot != this.docbase ? this.contentRoot : '');
     this.http.get<any[]>(dirUrl).subscribe(resp => {
       this.loading = false;
       //console.log(resp);
       if (resp.length > 0) {
         this.dirs = resp;
         this.breadcrumbs = [{
-          path: this.contentRoot == docbase ? '' : docbase,
+          path: this.contentRoot == this.docbase ? '' : this.docbase,
           name: this.contentRoot,
           pathSeparator: resp[0].pathSeparator
         }];
@@ -117,13 +124,13 @@ export class FileBrowserComponent implements OnInit {
   private resetBreadcrumbs(dir: any) {
     this.breadcrumbs = [];
     let paths: string[] = dir.path.split(dir.pathSeparator);
-    if (this.contentRoot != docbase)
-      paths = paths.filter(path => path != docbase);
+    if (this.contentRoot != this.docbase)
+      paths = paths.filter(path => path != this.docbase);
     paths.push(dir.name)
     let dirPath = '';
     for (let index = 0; index < paths.length; index++) {
       const path = paths[index];
-      if (path != docbase) {
+      if (path != this.docbase) {
         if (dirPath.length == 0)
           dirPath = dirPath + path;
         else
@@ -153,10 +160,10 @@ export class FileBrowserComponent implements OnInit {
     let selectedIndex = this.breadcrumbs.findIndex(ele => ele.path == selected.path);
     if (selectedIndex != -1) {
       this.breadcrumbs = this.breadcrumbs.slice(0, selectedIndex + 1);
-      if (selected.name == docbase)
-        this.onDirClick(this.dirMap[docbase + selected.path]);
+      if (selected.name == this.docbase)
+        this.onDirClick(this.dirMap[this.docbase + selected.path]);
       else
-        this.onDirClick(this.dirMap[docbase + selected.pathSeparator + selected.path]);
+        this.onDirClick(this.dirMap[this.docbase + selected.pathSeparator + selected.path]);
     }
   }
 
