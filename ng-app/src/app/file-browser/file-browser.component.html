@@ -6,9 +6,9 @@
 </div>
 <div *ngIf="loading"><i class="fas fa-4x fa-spin fa-circle-notch" style="position: absolute;top:30%;left:50%;"></i>
 </div>
-<div class="card m-2">
+<div *ngIf="!loading" class="card m-2">
   <div class="card-header bg-transparent text-center">
-    <span *ngIf="!loading" class="float-left">Folders <i class="fas fa-arrow-right"></i>
+    <span class="float-left">Folders <i class="fas fa-arrow-right"></i>
       {{dirs.length}} & Files <i class="fas fa-arrow-right"></i> {{files.length}}</span>
     <!-- <strong class="text-secondary">IMI File Manager</strong> -->
     <span class="float-right"><button class="btn btn-sm btn-primary mr-1"
@@ -16,7 +16,7 @@
     <span class="float-right"><input [(ngModel)]='filter' (input)="onFilter($event)" class="mr-1"
         placeholder="Search in current folder"></span>
     <br>
-    <span *ngIf="!loading && breadcrumbs?.length>0" class="float-left">
+    <span *ngIf="breadcrumbs?.length>0" class="float-left">
       <nav aria-label="breadcrumb">
         <ol class="breadcrumb bg-transparent" style="max-height: 15px;">
           <li class="mr-1"><i class="far fa-folder-open"></i></li>
@@ -31,7 +31,7 @@
       </nav>
     </span>
   </div>
-  <div *ngIf="!loading" class="card-body row">
+  <div class="card-body row">
     <div class="col-2">
       <div class="text-secondary ml-1"><strong>List of Folders <a href="#collapseAddFolder" data-toggle="collapse"
             title="Add new folder here" onclick="$('#addFolderInput').val('')"><i

@@ -54,6 +54,7 @@ export class FileBrowserComponent implements OnInit {
   }
 
   setContentRoot() {
+    this.loading = true;
     this.http.get(environment.serviceUrl + 'getFileRoot', {
       responseType: 'text'
     }).subscribe(resp => {
@@ -63,7 +64,6 @@ export class FileBrowserComponent implements OnInit {
   }
 
   listFilesAndDirectories() {
-    this.loading = true;
     if (!this.contentRoot)
       this.contentRoot = this.docbase;
     let dirUrl = environment.serviceUrl + "listDirectories?dir=" + (this.contentRoot != this.docbase ? this.contentRoot : '');
