@@ -71,21 +71,23 @@ public class FileServiceImpl implements FileService {
 	@Override
 	public AjaxResponse upload(MultipartFile file, Optional<String> dir, Optional<String> type) {
 		AjaxResponse response = new AjaxResponse();
-		String message = null;
+		String fileName = file.getOriginalFilename();
+		if (fileName.contains("\\"))
+			fileName = fileName.substring(fileName.lastIndexOf("\\") + 1);
 		try {
-			File toUpload = new File(getFilePath(dir, type) + PATH_SEPARATOR + file.getOriginalFilename());
+			File toUpload = new File(getFilePath(dir, type) + PATH_SEPARATOR + fileName);
 			if (toUpload.exists()) {
-				message = "a file by that name already exists";
+				String message = "a file by that name already exists";
 				response.setError(new AjaxResponse.Error(message));
 				log.error(message);
 			} else {
 				FileUtils.writeByteArrayToFile(toUpload, file.getBytes());
-				response.setFileName(file.getOriginalFilename());
+				response.setFileName(fileName);
 				response.setUploaded(true);
 				response.setMessage("File uploaded successfully!");
 			}
 		} catch (Exception e) {
-			message = "unable to upload file::" + file.getName() + " at this time.";
+			String message = "unable to upload file::" + fileName + " at this time.";
 			response.setError(new AjaxResponse.Error(message));
 			log.error(message.concat("Exception is---->"), e);
 		}
@@ -95,20 +97,73 @@ public class FileServiceImpl implements FileService {
 	@Override
 	public AjaxResponse delete(String filePath) {
 		AjaxResponse response = new AjaxResponse();
-		String message = null;
 		try {
 			File file = new File(getFilePath(Optional.of(filePath)));
 			if (!file.delete()) {
-				message = "Error Deleting the File.";
+				String message = "Error Deleting the File.";
 				response.setError(new AjaxResponse.Error(message));
 				log.error(message);
-			}
+			} else
+				response.setMessage("File Deleted Successfully.");
 		} catch (Exception e) {
-			message = "Error Deleting the File.";
+			String message = "Error Deleting the File.";
 			response.setError(new AjaxResponse.Error(message));
 			log.error(message.concat("Exception is---->"), e);
 		}
-		response.setMessage("File Deleted Successfully.");
+		return response;
+	}
+
+	@Override
+	public AjaxResponse addFolder(String folderName, String folderPath) {
+		AjaxResponse response = new AjaxResponse();
+		File dir = null;
+		try {
+			if (StringUtils.isNotEmpty(folderPath))
+				dir = getFile(folderPath + PATH_SEPARATOR + folderName);
+			else
+				dir = getFile(folderName);
+			if (dir.exists() && dir.isDirectory()) {
+				String message = "A folder with the name " + folderName + " already exists";
+				response.setError(new AjaxResponse.Error(message));
+				log.error(message);
+			} else if (dir.mkdirs()) {
+				response.setMessage("Folder created successfully!");
+			} else
+				throw new Exception("Couldn't add folder.");
+		} catch (Exception e) {
+			String message = "Error adding folder " + folderName + " at this time";
+			response.setError(new AjaxResponse.Error(message));
+			log.error(message.concat("Exception is---->"), e);
+		}
+		return response;
+	}
+
+	@Override
+	public AjaxResponse deleteFolder(String folderName, String folderPath) {
+		AjaxResponse response = new AjaxResponse();
+		File dir = null;
+		try {
+			if (StringUtils.isNotEmpty(folderPath))
+				dir = getFile(folderPath + PATH_SEPARATOR + folderName);
+			else
+				dir = getFile(folderName);
+			if (!dir.exists() && dir.isDirectory()) {
+				String message = "A folder with the name " + folderName + " doesn't exist!";
+				response.setError(new AjaxResponse.Error(message));
+				log.error(message);
+			} else if (dir.list().length > 0) {
+				String message = "The specified folder is not empty!";
+				response.setError(new AjaxResponse.Error(message));
+				log.error(message);
+			} else if (dir.delete())
+				response.setMessage("Folder deleted successfully!");
+			else
+				throw new Exception("Couldn't delete folder.");
+		} catch (Exception e) {
+			String message = "Error deleting folder " + folderName + " at this time!";
+			response.setError(new AjaxResponse.Error(message));
+			log.error(message.concat("Exception is---->"), e);
+		}
 		return response;
 	}
 
@@ -117,7 +172,7 @@ public class FileServiceImpl implements FileService {
 		StringBuilder base = new StringBuilder(FILE_DIRECTORY + PATH_SEPARATOR + FILE_ROOT);
 		if (dirs.length > 0) {
 			for (Optional<String> dir : dirs) {
-				if (StringUtils.isNotEmpty(dir.orElse("")))
+				if (dir.isPresent() && StringUtils.isNotEmpty(dir.get()))
 					base.append(PATH_SEPARATOR).append(stripFileRootFromPath(dir.get()));
 			}
 		}
@@ -129,7 +184,7 @@ public class FileServiceImpl implements FileService {
 		StringBuilder base = new StringBuilder(FILE_ROOT);
 		if (dirs.length > 0) {
 			for (Optional<String> dir : dirs) {
-				if (StringUtils.isNotEmpty(dir.orElse("")))
+				if (dir.isPresent() && StringUtils.isNotEmpty(dir.get()))
 					base.append(PATH_SEPARATOR).append(stripFileRootFromPath(dir.get()));
 			}
 		}
@@ -144,5 +199,4 @@ public class FileServiceImpl implements FileService {
 			strippedPath = path.replace(FILE_ROOT, "");
 		return strippedPath;
 	}
-
 }

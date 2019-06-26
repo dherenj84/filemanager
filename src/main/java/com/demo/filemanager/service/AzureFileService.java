@@ -1,7 +1,6 @@
 package com.demo.filemanager.service;
 
 import java.io.File;
-import java.io.IOException;
 import java.net.URISyntaxException;
 import java.security.InvalidKeyException;
 import java.util.ArrayList;
@@ -69,7 +68,8 @@ public class AzureFileService implements FileService {
 								new FileView(fileName, fileItem.getClass() == CloudFileDirectory.class, filePath, "/"));
 					}
 				}
-			}
+			} else
+				throw new Exception("Can't get a reference to the directory");
 		} catch (Exception e) {
 			log.error("listFiles::error occured--------->", e);
 		}
@@ -97,7 +97,8 @@ public class AzureFileService implements FileService {
 									filePath, "/"));
 					}
 				}
-			}
+			} else
+				throw new Exception("Can't get a reference to the directory");
 		} catch (Exception e) {
 			log.error("listFiles::error occured--------->", e);
 		}
@@ -110,19 +111,140 @@ public class AzureFileService implements FileService {
 		try {
 			filePath = stripFileShareFromPath(filePath);
 			CloudFile cloudFile = getCloudFileReference(filePath, Optional.empty(), Optional.empty(), false);
-			File file = File.createTempFile(filePath.split("\\.")[0], ".".concat(filePath.split("\\.")[1]));
-			cloudFile.downloadToFile(file.getCanonicalPath());
-			executor.execute(() -> {
-				try {
-					Thread.sleep(100l);
-					file.delete();
-				} catch (Exception e) {
-					log.error("error deleting temp file", e);
-				}
-			});
-			response = file;
-		} catch (StorageException | IOException e) {
+			if (cloudFile != null) {
+				File file = File.createTempFile(filePath.split("\\.")[0], ".".concat(filePath.split("\\.")[1]));
+				cloudFile.downloadToFile(file.getCanonicalPath());
+				executor.execute(() -> {
+					try {
+						Thread.sleep(100l);
+						file.delete();
+					} catch (Exception e) {
+						log.error("error deleting temp file", e);
+					}
+				});
+				response = file;
+			} else
+				throw new Exception("Can't get a reference to the directory");
+		} catch (Exception e) {
 			log.error("getFile::error occured--------->", e);
+		}
+		return response;
+	}
+
+	@Override
+	public AjaxResponse upload(MultipartFile file, Optional<String> dir, Optional<String> type) {
+		AjaxResponse response = new AjaxResponse();
+		String fileName = file.getOriginalFilename();
+		if (fileName.contains("\\"))
+			fileName = fileName.substring(fileName.lastIndexOf("\\") + 1);
+		try {
+			if (dir.isPresent())
+				dir = Optional.of(stripFileShareFromPath(dir.get()));
+			CloudFile cloudFile = getCloudFileReference(fileName, dir, type, true);
+			if (cloudFile != null) {
+				if (cloudFile.exists()) {
+					String message = "a file by that name already exists";
+					response.setError(new AjaxResponse.Error(message));
+					log.error(message);
+				} else {
+					cloudFile.upload(file.getInputStream(), file.getSize());
+					response.setFileName(fileName);
+					response.setUploaded(true);
+					response.setMessage("File uploaded successfully!");
+				}
+			} else
+				throw new Exception("Can't get a reference to the directory");
+		} catch (Exception e) {
+			String message = "unable to upload file::" + fileName + " at this time.";
+			response.setError(new AjaxResponse.Error(message));
+			log.error(message.concat("Exception is---->"), e);
+		}
+		return response;
+	}
+
+	@Override
+	public AjaxResponse delete(String filePath) {
+		AjaxResponse response = new AjaxResponse();
+		try {
+			filePath = stripFileShareFromPath(filePath);
+			CloudFile cloudFile = getCloudFileReference(filePath, Optional.empty(), Optional.empty(), false);
+			if (cloudFile != null) {
+				if (cloudFile.deleteIfExists())
+					response.setMessage("File Deleted Successfully.");
+				else
+					throw new Exception("Couldn't delete file.");
+			} else
+				throw new Exception("Can't get a reference to the directory");
+		} catch (Exception e) {
+			String message = "Error Deleting the File.";
+			response.setError(new AjaxResponse.Error(message));
+			log.error(message.concat("Exception is---->"), e);
+		}
+		return response;
+	}
+
+	@Override
+	public AjaxResponse addFolder(String folderName, String folderPath) {
+		AjaxResponse response = new AjaxResponse();
+		CloudFileDirectory cloudDir = null;
+		try {
+			if (StringUtils.isNotEmpty(folderPath))
+				cloudDir = getCloudFileDirectory(
+						Optional.of(stripFileShareFromPath(folderPath + PATH_SEPARATOR + folderName)),
+						Optional.empty());
+			else
+				cloudDir = getCloudFileDirectory(Optional.of(folderName), Optional.empty());
+			if (cloudDir != null) {
+				if (cloudDir.exists()) {
+					String message = "A folder with the name " + folderName + " already exists!";
+					response.setError(new AjaxResponse.Error(message));
+					log.error(message);
+				} else if (cloudDir.createIfNotExists()) {
+					response.setMessage("Folder created successfully!");
+				} else
+					throw new Exception("Couldn't add folder.");
+			} else
+				throw new Exception("Can't get a reference to the directory");
+
+		} catch (Exception e) {
+			String message = "Error adding folder " + folderName + " at this time!";
+			response.setError(new AjaxResponse.Error(message));
+			log.error(message.concat("Exception is---->"), e);
+		}
+		return response;
+	}
+
+	@Override
+	public AjaxResponse deleteFolder(String folderName, String folderPath) {
+		AjaxResponse response = new AjaxResponse();
+		CloudFileDirectory cloudDir = null;
+		try {
+			if (StringUtils.isNotEmpty(folderPath))
+				cloudDir = getCloudFileDirectory(
+						Optional.of(stripFileShareFromPath(folderPath + PATH_SEPARATOR + folderName)),
+						Optional.empty());
+			else
+				cloudDir = getCloudFileDirectory(Optional.of(folderName), Optional.empty());
+			if (cloudDir != null) {
+				if (!cloudDir.exists()) {
+					String message = "A folder with the name " + folderName + " doesn't exist!";
+					response.setError(new AjaxResponse.Error(message));
+					log.error(message);
+				} else if (cloudDir.listFilesAndDirectories().iterator().hasNext()) {
+					String message = "The specified folder is not empty!";
+					response.setError(new AjaxResponse.Error(message));
+					log.error(message);
+				} else if (cloudDir.deleteIfExists())
+					response.setMessage("Folder deleted successfully!");
+				else
+					throw new Exception("Couldn't delete folder.");
+			} else
+				throw new Exception("Can't get a reference to the directory");
+
+		} catch (Exception e) {
+			String message = "Error deleting folder " + folderName + " at this time!";
+			response.setError(new AjaxResponse.Error(message));
+			log.error(message.concat("Exception is---->"), e);
 		}
 		return response;
 	}
@@ -133,10 +255,13 @@ public class AzureFileService implements FileService {
 		CloudFileDirectory contentDir;
 		try {
 			contentDir = getCloudFileDirectory(dir, bucket);
-			if (upload && !contentDir.exists())
-				contentDir.createIfNotExists();
-			file = contentDir.getFileReference(fileName);
-		} catch (URISyntaxException | StorageException e) {
+			if (contentDir != null) {
+				if (upload && !contentDir.exists())
+					contentDir.createIfNotExists();
+				file = contentDir.getFileReference(fileName);
+			} else
+				throw new Exception("Can't get a reference to the directory");
+		} catch (Exception e) {
 			log.error("getCloudFileReference::error occured--------->", e);
 		}
 		return file;
@@ -162,6 +287,15 @@ public class AzureFileService implements FileService {
 		return directory;
 	}
 
+	private String stripFileShareFromPath(String path) {
+		String strippedPath = path;
+		if (path.contains(FILE_SHARE.concat(PATH_SEPARATOR)))
+			strippedPath = path.replaceAll(FILE_SHARE.concat(PATH_SEPARATOR), "");
+		else if (path.contains(FILE_SHARE))
+			strippedPath = path.replaceAll(FILE_SHARE, "");
+		return strippedPath;
+	}
+
 	@PostConstruct
 	public void init() {
 		try {
@@ -170,61 +304,5 @@ public class AzureFileService implements FileService {
 			log.error("init::FATAL---------->Couldn't create AZURE connection");
 		}
 		fileClient = storageAccount.createCloudFileClient();
-	}
-
-	@Override
-	public AjaxResponse upload(MultipartFile file, Optional<String> dir, Optional<String> type) {
-		AjaxResponse response = new AjaxResponse();
-		String message = null;
-		try {
-			if (dir.isPresent())
-				dir = Optional.of(stripFileShareFromPath(dir.get()));
-			CloudFile cloudFile = getCloudFileReference(file.getOriginalFilename(), dir, type, true);
-			if (cloudFile.exists()) {
-				message = "a file by that name already exists";
-				response.setError(new AjaxResponse.Error(message));
-				log.error(message);
-			} else {
-				cloudFile.upload(file.getInputStream(), file.getSize());
-				response.setFileName(file.getOriginalFilename());
-				response.setUploaded(true);
-				response.setMessage("File uploaded successfully!");
-			}
-		} catch (StorageException | IOException | URISyntaxException e) {
-			message = "unable to upload file::" + file.getName() + " at this time.";
-			response.setError(new AjaxResponse.Error(message));
-			log.error(message.concat("Exception is---->"), e);
-		}
-		return response;
-	}
-
-	@Override
-	public AjaxResponse delete(String filePath) {
-		AjaxResponse response = new AjaxResponse();
-		String message = null;
-		try {
-			filePath = stripFileShareFromPath(filePath);
-			CloudFile cloudFile = getCloudFileReference(filePath, Optional.empty(), Optional.empty(), false);
-			if (!cloudFile.deleteIfExists()) {
-				message = "Error Deleting the File.";
-				response.setError(new AjaxResponse.Error(message));
-				log.error(message);
-			}
-		} catch (StorageException | URISyntaxException e) {
-			message = "Error Deleting the File.";
-			response.setError(new AjaxResponse.Error(message));
-			log.error(message.concat("Exception is---->"), e);
-		}
-		response.setMessage("File Deleted Successfully.");
-		return response;
-	}
-
-	private String stripFileShareFromPath(String path) {
-		String strippedPath = path;
-		if (path.contains(FILE_SHARE.concat(PATH_SEPARATOR)))
-			strippedPath = path.replaceAll(FILE_SHARE.concat(PATH_SEPARATOR), "");
-		else if (path.contains(FILE_SHARE))
-			strippedPath = path.replaceAll(FILE_SHARE, "");
-		return strippedPath;
 	}
 }

@@ -1,19 +1,14 @@
 <app-header [user]="loggedInUser"></app-header>
-<input type="file" id="fileUpload" (input)="uploadFile()" hidden>
+<input type="file" id="fileUpload" (change)="uploadFile()" hidden>
 <div class="alert m-2" [class.alert-success]="alertSuccess" [class.alert-danger]="!alertSuccess" role="alert"
   style="display: none;">
   <strong>{{alertSuccess?'Success!':'Error!'}} </strong> {{alertMessage}}
 </div>
 <div *ngIf="loading"><i class="fas fa-4x fa-spin fa-circle-notch" style="position: absolute;top:30%;left:50%;"></i>
 </div>
-<div *ngIf="!loading && dirs.length==0" class="jumbotron jumbotron-fluid m-2">
-  <div class="container">
-    <p class="lead">No content available.</p>
-  </div>
-</div>
 <div class="card m-2">
   <div class="card-header bg-transparent text-center">
-    <span *ngIf="!loading && dirs.length!=0" class="float-left">Folders <i class="fas fa-arrow-right"></i>
+    <span *ngIf="!loading" class="float-left">Folders <i class="fas fa-arrow-right"></i>
       {{dirs.length}} & Files <i class="fas fa-arrow-right"></i> {{files.length}}</span>
     <!-- <strong class="text-secondary">IMI File Manager</strong> -->
     <span class="float-right"><button class="btn btn-sm btn-primary mr-1"
@@ -29,18 +24,42 @@
             <a class="breadcrumb-item-link" href="#"
               (click)="onBreadcrumbClick(breadcrumb, $event)">{{breadcrumb.name}}</a>
           </li>
+          <li class="mx-2"><a href="#" (click)="refresh($event)" title="Refresh Files & Folders"><i
+                class="fas fa-sync text-secondary"></i></a>
+          </li>
         </ol>
       </nav>
     </span>
   </div>
-  <div *ngIf="!loading && dirs.length!=0" class="card-body row">
+  <div *ngIf="!loading" class="card-body row">
     <div class="col-2">
-      <div class="text-secondary ml-1"><strong>List of Folders</strong></div>
+      <div class="text-secondary ml-1"><strong>List of Folders <a href="#collapseAddFolder" data-toggle="collapse"
+            title="Add new folder here" onclick="$('#addFolderInput').val('')"><i
+              class="fas fa-folder-plus text-primary" style="font-size: larger;"></i></a></strong>
+      </div>
+      <div class="collapse" id="collapseAddFolder">
+        <div class="input-group mb-2">
+          <input id="addFolderInput" type="text" class="form-control" placeholder="Folder Name" aria-label="Folder Name"
+            aria-describedby="addFolder">
+          <div class="input-group-append">
+            <button (click)="addFolder()" class="btn btn-outline-primary" type="button" id="addFolder">Add</button>
+          </div>
+        </div>
+      </div>
       <div class="list-group">
-        <a *ngFor="let dir of dirs" href="#" (click)="onDirClick(dir, $event)"
-          class="list-group-item list-group-item-action" [class.disabled]='dir.name==selectedDir.name'>
-          <i class="far fa-folder"></i> {{dir.name}}
-        </a>
+        <ng-container *ngIf="dirs.length>0">
+          <span *ngFor="let dir of dirs" class="list-group-item list-group-item-action">
+            <a href="#" (click)="onDirClick(dir, $event)" class="text-secondary" style="text-decoration: none;">
+              <i class="far fa-folder"></i> {{dir.name}}</a>
+            <a title="Delete folder {{dir.name}}" class="float-right" href="#" (click)="deleteFolder(dir, $event)"><i
+                class="far fa-trash-alt text-danger"></i></a>
+          </span>
+        </ng-container>
+        <ng-container *ngIf="dirs.length==0">
+          <span class="list-group-item list-group-item-action">
+            No Folders Available!
+          </span>
+        </ng-container>
       </div>
     </div>
     <div class="col-10">
@@ -78,6 +97,8 @@
                 class="far fa-trash-alt text-danger"></i></a>
             <a href="#" class="text-secondary float-right mx-2" title="Download"
               (click)="onFileDownload(file, $event)"><i class="fas fa-download text-info"></i></a>
+            <a href="#" class="float-right text-info" title="Copy File Path to Clipboard"
+              (click)="copyPath(file,$event)"><i class="far fa-clipboard"></i></a>
           </div>
         </div>
       </div>
@@ -85,4 +106,25 @@
   </div>
   <div class="card-footer" hidden>Folders <i class="fas fa-arrow-right"></i> {{dirs.length}} Files <i
       class="fas fa-arrow-right"></i> {{files.length}}</div>
+</div>
+
+<div id="addFolder" class="modal" tabindex="-1" role="dialog">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-body d-flex text-center">
+        <label for="addFolderInput" class="mr-1">Folder Name</label>
+        <input class="form-input" id="addFolderInput" autofocus>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary float-left" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" (click)="addFolder()">Add</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast bg-success text-white" data-delay="2000" style="position: fixed; top: 40%; right: 40%;">
+  <div class="toast-body">
+    <strong>Copied to Clipboard!</strong>
+  </div>
 </div>

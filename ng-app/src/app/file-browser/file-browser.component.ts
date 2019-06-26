@@ -49,7 +49,6 @@ export class FileBrowserComponent implements OnInit {
     }
     else {
       this.loggedInUser = JSON.parse(sessionStorage.getItem('loggedInUser'));
-      this.loading = true;
       this.setContentRoot();
     }
   }
@@ -64,6 +63,7 @@ export class FileBrowserComponent implements OnInit {
   }
 
   listFilesAndDirectories() {
+    this.loading = true;
     if (!this.contentRoot)
       this.contentRoot = this.docbase;
     let dirUrl = environment.serviceUrl + "listDirectories?dir=" + (this.contentRoot != this.docbase ? this.contentRoot : '');
@@ -108,9 +108,7 @@ export class FileBrowserComponent implements OnInit {
     this.http.get<any[]>(dirUrl).subscribe(resp => {
       this.loading = false;
       //console.log(resp);
-      if (resp.length > 0) {
-        this.dirs = resp;
-      }
+      this.dirs = resp;
     });
     this.http.get<any[]>(fileUrl).subscribe(resp => {
       //console.log(resp);
@@ -179,20 +177,12 @@ export class FileBrowserComponent implements OnInit {
     var fileInput = <HTMLInputElement>document.getElementById('fileUpload');
     var file = fileInput.files[0];
     var formData = new FormData();
-    formData.append('file', file); this.http.post<any>(environment.serviceUrl + 'uploadFile?dir=' + this.determineUrlPath(this.selectedDir), formData).subscribe(resp => {
-      if (resp.error) {
-        this.alertSuccess = false;
-        this.alertMessage = resp.error.message;
-      }
-      else {
-        this.alertMessage = resp.message;
-        this.onDirClick(this.selectedDir);
-      }
-      $('.alert').show();
-      setTimeout(() => {
-        $('.alert').hide();
-      }, 3000);
-    });
+    formData.append('file', file);
+    this.loading = true;
+    this.http.post<any>(environment.serviceUrl + 'uploadFile?dir=' + this.determineUrlPath(this.selectedDir), formData).subscribe(resp => this.processResponse(resp));
+    setTimeout(() => {
+      $('#fileUpload').val('');
+    }, 0);
   }
 
   determineUrlPath(dir: any) {
@@ -211,20 +201,8 @@ export class FileBrowserComponent implements OnInit {
     if (confirm("Delete File " + fileView.name + "?")) {
       this.alertMessage = '';
       this.alertSuccess = true;
-      this.http.get<any>(environment.serviceUrl + "deleteFile?filePath=" + this.determineUrlPath(fileView)).subscribe(resp => {
-        if (resp.error) {
-          this.alertSuccess = false;
-          this.alertMessage = resp.error.message;
-        }
-        else {
-          this.alertMessage = resp.message;
-          this.onDirClick(this.selectedDir);
-        }
-        $('.alert').show();
-        setTimeout(() => {
-          $('.alert').hide();
-        }, 3000);
-      });
+      this.loading = true
+      this.http.get<any>(environment.serviceUrl + "deleteFile?filePath=" + this.determineUrlPath(fileView)).subscribe(resp => this.processResponse(resp));
     }
   }
 
@@ -233,9 +211,11 @@ export class FileBrowserComponent implements OnInit {
       e.preventDefault();
     this.alertSuccess = true;
     this.alertMessage = '';
+    this.loading = true
     this.http.get(environment.serviceUrl + "getFile/" + fileView.name + "?filePath=" + this.determineUrlPath(fileView), {
       responseType: 'blob'
     }).subscribe(resp => {
+      this.loading = false;
       let blob = new Blob([resp], { type: 'application/octet-stream' });
       let link = document.createElement('a');
       link.href = window.URL.createObjectURL(blob);
@@ -298,4 +278,64 @@ export class FileBrowserComponent implements OnInit {
     return valid;
   }
 
+  addFolder() {
+    if ($('#addFolderInput').val().trim().length == 0) {
+      this.processResponse({
+        error: {
+          message: 'Folder name is empty'
+        }
+      });
+      return;
+    }
+    this.loading = true;
+    this.alertSuccess = true;
+    this.alertMessage = '';
+    $('#addFolder').modal('hide');
+    $('#collapseAddFolder').collapse('hide');
+    this.http.get<any>(environment.serviceUrl + "addFolder/" + $('#addFolderInput').val() + '?folderPath=' + this.determineUrlPath(this.selectedDir)).subscribe(resp => this.processResponse(resp));
+  }
+
+  deleteFolder(dir: any, e: Event) {
+    e.preventDefault();
+    this.loading = true;
+    this.alertSuccess = true;
+    this.alertMessage = '';
+    if (confirm("Delete folder " + dir.name + "?")) {
+      this.http.get<any>(environment.serviceUrl + "deleteFolder/" + dir.name + "?folderPath=" + this.determineUrlPath(this.selectedDir)).subscribe(resp => this.processResponse(resp))
+    }
+    else {
+      this.loading = false;
+      return;
+    }
+  }
+
+  processResponse(resp: any) {
+    this.loading = false;
+    if (resp.error) {
+      this.alertSuccess = false;
+      this.alertMessage = resp.error.message;
+    }
+    else {
+      this.alertMessage = resp.message;
+      this.onDirClick(this.selectedDir);
+    }
+    $('.alert').show();
+    setTimeout(() => {
+      $('.alert').hide();
+    }, 3000);
+  }
+
+  copyPath(file: any, e: Event) {
+    e.preventDefault();
+    $('body').append("<input id='inputFileUrl' value=" + this.getFileUrl(file) + ">");
+    $('#inputFileUrl').select();
+    document.execCommand("copy");
+    $('.toast').toast('show');
+    $('#inputFileUrl').remove();
+  }
+
+  refresh(e: Event) {
+    e.preventDefault();
+    this.onDirClick(this.selectedDir);
+  }
 }

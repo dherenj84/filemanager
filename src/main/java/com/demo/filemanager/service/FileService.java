@@ -22,4 +22,8 @@ public interface FileService {
 	public AjaxResponse upload(MultipartFile file, Optional<String> dir, Optional<String> type);
 
 	public AjaxResponse delete(String filePath);
+	
+	public AjaxResponse addFolder(String folderName, String folderPath);
+
+	public AjaxResponse deleteFolder(String folderName, String folderPath);
 }

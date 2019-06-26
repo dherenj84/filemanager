@@ -90,25 +90,24 @@ public class FileController {
 
 	@GetMapping("/getFile/{fileName}")
 	public void getFile(@PathVariable String fileName, @RequestParam String filePath, HttpServletResponse response) {
-		try {
-			File file = serviceFactory.getInstance().getFile(filePath);
-			InputStream in = FileUtils.openInputStream(file);
+		File file = serviceFactory.getInstance().getFile(filePath);
+		try (InputStream in = FileUtils.openInputStream(file)) {
 			response.setContentType(Files.probeContentType(file.toPath()));
 			response.getOutputStream().write(IOUtils.toByteArray(in));
 			response.flushBuffer();
-			Thread t = new Thread(() -> {
-				try {
-					if (in != null)
-						in.close();
-				} catch (IOException e) {
-					log.error("error occured closing the input stream. Exception is ---->", e);
-				}
-			});
-			Thread.sleep(100);
-			t.start();
 		} catch (Exception e) {
 			log.error("error occured getting the file. Exception is ---->", e);
 		}
+	}
+
+	@GetMapping("/addFolder/{folderName}")
+	public ResponseEntity<?> addFolder(@PathVariable String folderName, @RequestParam String folderPath) {
+		return ResponseEntity.ok(serviceFactory.getInstance().addFolder(folderName, folderPath));
+	}
+
+	@GetMapping("/deleteFolder/{folderName}")
+	public ResponseEntity<?> deleteFolder(@PathVariable String folderName, @RequestParam String folderPath) {
+		return ResponseEntity.ok(serviceFactory.getInstance().deleteFolder(folderName, folderPath));
 	}
 
 	@GetMapping("/getApplication/{id}")
