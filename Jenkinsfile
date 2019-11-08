@@ -14,5 +14,11 @@ mvn clean package -DskipTests'''
       }
     }
 
+    stage('deploy') {
+      steps {
+        pushToCloudFoundry(organization: 'bubbacorp', cloudSpace: 'development', target: 'api.run.pivotol.io', credentialsId: '12345')
+      }
+    }
+
   }
 }
